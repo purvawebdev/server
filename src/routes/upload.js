@@ -1,41 +1,54 @@
-// Upload route: accepts PDF file, uploads to Cloudinary (optional), extracts text,
+// Upload route: accepts PDF file, extracts text directly from buffer,
 // splits/embeds text and pushes to Pinecone via vectorStore.storeDocument
 
 import express from "express";
 import multer from "multer";
-import fs from "fs";
-import pdf from "pdf-parse";
-import cloudinary from "../utils/cloudinary.js"; // cloudinary helper
-import { storeDocument } from "../utils/vectorStore.js"; // vector store helper
+import { storeDocument } from "../utils/vectorStore.js";
 
 const router = express.Router();
-const upload = multer({ dest: "uploads/" }); // multer writes temp files to uploads/
+
+// Use memory storage instead of disk storage - no temp files!
+const upload = multer({
+  storage: multer.memoryStorage(), // Store file in memory as buffer
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB limit
+  }
+});
 
 router.post("/upload", upload.single("file"), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: "No file uploaded" });
 
-    // Upload the raw PDF to Cloudinary (resource_type raw for non-image files)
-    const cloudRes = await cloudinary.uploader.upload(req.file.path, { resource_type: "raw" });
+    // FIX: Import the new PDFParse class from pdf-parse v2
+    const { PDFParse } = await import("pdf-parse");
 
-    // Read the temporary file and parse the text using pdf-parse
-    const buffer = fs.readFileSync(req.file.path);
-    const parsed = await pdf(buffer); // parsed.text contains full text
-
-    // Store extracted text in Pinecone (vector embeddings)
-    const chunksStored = await storeDocument(parsed.text, {
-      source: req.file.originalname,
-      cloud_url: cloudRes.secure_url // store URL so you can link back to original file
+    // Create parser instance with the PDF buffer
+    const parser = new PDFParse({ 
+      data: req.file.buffer 
     });
 
-    // Delete local temporary upload — we don't keep local PDFs
-    fs.unlinkSync(req.file.path);
+    // Extract text using the new API
+    const result = await parser.getText();
+    
+    // Always destroy the parser to free memory
+    await parser.destroy();
 
-    // Return success with chunk count and cloud URL for reference
+    // Store extracted text in Pinecone
+    const chunksStored = await storeDocument(result.text, {
+      source: req.file.originalname,
+      uploaded_at: new Date().toISOString(),
+      file_size: req.file.size
+    });
+
     res.json({
       success: true,
       chunks: chunksStored,
-      cloud_url: cloudRes.secure_url
+      message: `PDF processed successfully! Stored ${chunksStored} text chunks.`,
+      file_info: {
+        original_name: req.file.originalname,
+        size: req.file.size,
+        text_length: result.text.length
+      }
     });
   } catch (err) {
     console.error("Upload error:", err);

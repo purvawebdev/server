@@ -1,31 +1,34 @@
-// utils/gemini.js — modern Gemini SDK version
-// This replaces the manual fetch() API call and uses the official Google client.
-
-import { GoogleGenerativeAI } from "@google/generative-ai";
+// utils/gemini.js - Fixed to use the same SDK as vectorStore.js
+import { GoogleGenAI } from "@google/genai";
 import dotenv from "dotenv";
 dotenv.config();
 
-// Initialize Gemini client with your API key from .env
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+// Use the same client as vectorStore.js
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
-// Exported function to query Gemini with context + question
 export async function queryGemini(question, context) {
   try {
-    // Get the generative model
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+    // Build the prompt with context
+    const prompt = `Use the following context to answer the question. If the answer cannot be found in the context, use your own knowledge base."
 
-    // Build the combined input string
-    const prompt = `Context:\n${context}\n\nQuestion: ${question}\nAnswer:`;
+Context:
+${context}
 
-    // Generate the response (non-streaming)
-    const result = await model.generateContent(prompt);
+Question: ${question}
 
-    // result.response.text() gives you the generated text
-    const output = result.response.text();
-    return output || "No valid response.";
+Answer:`;
+
+    // Use the same API pattern as vectorStore.js
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash", // Use gemini-2.5-flash instead of 2.0
+      contents: prompt,
+    });
+
+    // Extract the text from response
+    return response.text || "No response generated.";
+
   } catch (err) {
-    console.error("Gemini SDK error:", err);
-    return "An error occurred while fetching AI response.";
+    console.error("Gemini query error:", err);
+    throw new Error(`Failed to get response from Gemini: ${err.message}`);
   }
 }
-//add the stream effect later it is inbuilt in the sdk 

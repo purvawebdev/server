@@ -1,7 +1,7 @@
 // Cloudinary helper: configures and exports cloudinary client
-import { v2 as cloudinary } from "cloudinary";
-import dotenv from "dotenv";
-dotenv.config();
+// import { v2 as cloudinary } from "cloudinary";
+// import dotenv from "dotenv";
+// dotenv.config();
 
 // Configure cloudinary with env credentials. These are used to upload PDFs.
 cloudinary.config({
