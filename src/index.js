@@ -10,7 +10,14 @@ dotenv.config(); // Load environment variables from server/.env
 
 const app = express();
 
-app.use(cors());         // Allow cross-origin requests (adjust in prod)
+app.use(cors({
+  origin: [
+    'http://localhost:5173',
+    'https://your-frontend-domain.vercel.app',
+    'https://your-frontend-domain.netlify.app'
+  ],
+  credentials: true
+}));    
 app.use(express.json()); // Parse JSON bodies (for /api/chat)
 
 app.use("/api", chatRoutes);   // Mount chat routes at /api
