@@ -1,12 +1,14 @@
-// Entry point for the Express server
-
-import express from "express";               // Express web framework
-import cors from "cors";                     // CORS middleware so frontend can call backend
-import dotenv from "dotenv";                 // Loads .env into process.env
+import express from "express";               
+import cors from "cors";                     
+import dotenv from "dotenv";                 
 import chatRoutes from "./routes/chat.js";   // Chat API routes (search + query LLM)
 import uploadRoutes from "./routes/upload.js"; // Upload API routes (PDF upload & embedding)
+import authRoutes from "./routes/auth.js" 
+import connectDB from "./config/db.js";
 
-dotenv.config(); // Load environment variables from server/.env
+dotenv.config(); 
+
+connectDB();
 
 const app = express();
 
@@ -20,6 +22,7 @@ app.use(cors({
 }));    
 app.use(express.json()); // Parse JSON bodies (for /api/chat)
 
+app.use("/api/auth", authRoutes);
 app.use("/api", chatRoutes);   // Mount chat routes at /api
 app.use("/api", uploadRoutes); // Mount upload routes at /api
 
