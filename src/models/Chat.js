@@ -41,10 +41,6 @@ const chatSessionSchema = new mongoose.Schema({
   timestamps:true
 });
 
-// Update the 'updatedAt' field automatically whenever we save
-chatSessionSchema.pre('save', function(next) {
-  this.updatedAt = Date.now();
-  next();
-});
+  
 
 export const Chat = mongoose.model("Chat", chatSessionSchema);
