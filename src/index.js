@@ -3,7 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";                 
 import chatRoutes from "./routes/chat.js";   // Chat API routes (search + query LLM)
 import uploadRoutes from "./routes/upload.js"; // Upload API routes (PDF upload & embedding)
-import authRoutes from "./routes/auth.js" 
+import authRoutes from "./routes/auth.js";
 import connectDB from "./config/db.js";
 
 dotenv.config(); 

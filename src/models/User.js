@@ -28,13 +28,14 @@ const userSchema = new mongoose.Schema({
 });
 
 // Middleware: Encrypt password before saving
-userSchema.pre("save", async function(next) {
-  if (!this.isModified("password")) {
-    return next();
-  }
+// Middleware: Encrypt password before saving
+userSchema.pre("save", async function() {
+  // 1. If password is not modified, just return (Promise resolves automatically)
+  if (!this.isModified("password")) return;
+
+  // 2. Hash the password
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
-  next();
 });
 
 // Method: Check password
