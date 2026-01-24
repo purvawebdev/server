@@ -70,7 +70,7 @@ export const handleChat = async (req, res, next) => {
 
 export const getAllChats = async (req, res, next) => {
 try{
-  const userId = req.user_.id;
+  const userId = req.user._id;
 
   const chats = await Chat.find({userId: userId}).sort({updatedAt:-1}).select("_id title updatedAt");
   res.status(200).json(chats);
