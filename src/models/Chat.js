@@ -34,7 +34,6 @@ const chatSessionSchema = new mongoose.Schema({
     default: "New Conversation" 
   },
   messages: [messageSchema], // Embed the messages array inside the session
-  
 
 },
 {
