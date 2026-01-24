@@ -62,7 +62,7 @@ export const handleChat = async (req, res, next) => {
       chatId: chat._id 
     });
 
-  } catch (err) {
+  } catch (err) { 
     console.error("Chat error:", err);
     res.status(500).json({ error: err.message });
   }
