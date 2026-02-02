@@ -55,10 +55,9 @@ export const handleChat = async (req, res, next) => {
 
     await chat.save();
 
-    // --- STEP 5: Return Response + chatId ---
-    // We MUST return chatId so the frontend knows which thread to continue next time
+    // Return the complete updated chat, not just the response
     res.json({ 
-      response: answer, 
+      chat: chat,
       chatId: chat._id 
     });
 
@@ -77,4 +76,44 @@ try{
 }catch(err){
   next(err);
 }
+};
+
+export const getChat = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    // 1. Find chat by ID
+    const chat = await Chat.findById(id);
+
+    if (!chat) {
+      return res.status(404).json({ error: "Chat not found" });
+    }
+
+    // 2. Security Check: Does this chat belong to the logged-in user?
+    // We don't want User A reading User B's chats!
+    if (chat.userId.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ error: "Not authorized to view this chat" });
+    }
+
+    res.status(200).json(chat);
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const createNewChat = async (req, res, next) => {
+  try {
+    const userId = req.user._id;
+
+    // Create empty chat
+    const chat = await Chat.create({
+      userId: userId,
+      title: "New Chat",
+      messages: []
+    });
+
+    res.status(201).json({ chatId: chat._id });
+  } catch (err) {
+    next(err);
+  }
 };
