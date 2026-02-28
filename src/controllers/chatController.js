@@ -49,6 +49,8 @@ export const handleChat = async (req, res, next) => {
       // Continue without context if search fails
       context = "";
     }
+const chatHistory = chat.messages.slice(0,-1);
+
 
     // --- STEP 4: Stream Response ---
     res.setHeader("Content-Type", "text/event-stream");
@@ -63,7 +65,7 @@ export const handleChat = async (req, res, next) => {
     let fullAnswer = "";
 
     // Stream from Gemini
-    await queryGeminiStream(message, context, (chunk) => {
+    await queryGeminiStream(message,chatHistory, context, (chunk) => {
       fullAnswer += chunk;
       console.log("Sending chunk to client:", chunk.substring(0, 30) + "...");
       res.write(`data: ${JSON.stringify({ chunk, chatId: chat._id })}\n\n`);

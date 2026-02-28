@@ -33,7 +33,7 @@ Answer:`;
   }
 }
 
-export async function queryGeminiStream(userMessage, context, onChunk) {
+export async function queryGeminiStream(userMessage,chatHistory, context, onChunk) {
   try {
     console.log("Starting Gemini stream...");
     const systemPrompt = `Use the provided context to answer questions accurately. If the answer cannot be found in the context, use your own knowledge base.
@@ -41,12 +41,25 @@ export async function queryGeminiStream(userMessage, context, onChunk) {
 Context:
 ${context || "No context available"}`;
 
+//format the history for gemini cuz gemini expects model instead of assistant 
+
+const formattedContents = chatHistory.map((msg) => ({
+  role:msg.role === "assistant" ? "model" : "user",
+  parts:[{text:msg.content}],
+}));
+
+//also add the users text in the end of the array 
+formattedContents.push({
+  role:"user",
+  parts: [{text: userMessage}],
+})
+
     console.log("Calling generateContentStream with:", { userMessage, contextLength: context.length });
     
     const stream = await ai.models.generateContentStream({
       model: "gemini-2.5-flash",
       systemInstruction: systemPrompt,
-      contents: userMessage,
+      contents: formattedContents,
     });
 
     console.log("Stream created, starting iteration...");
@@ -68,3 +81,5 @@ ${context || "No context available"}`;
     throw new Error(`Failed to stream response from Gemini: ${err.message}`);
   }
 }
+
+//dont forget to add new chat when a chat gets endless or is too big to save context 
