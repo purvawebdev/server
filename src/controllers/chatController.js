@@ -13,21 +13,19 @@ export const handleChat = async (req, res, next) => {
 
     let chat;
 
+    const chatTitle = message.length > 30 ? message.substring(0,30) + "..." : message;
+
     // --- STEP 1: Determine if New or Existing Chat ---
     if (chatId) {
       chat = await Chat.findOne({ _id: chatId, userId: userId });
       
       if (!chat) {
-        chat = await Chat.create({
-          userId: userId,
-          title: message.substring(0, 30) + "...",
-          messages: []
-        });
+        return res.status(404).json({error:"Chat thread not found"});
       }
     } else {
       chat = await Chat.create({
         userId: userId,
-        title: message.substring(0, 30) + "...",
+        title: chatTitle,
         messages: []
       });
     }
@@ -74,16 +72,20 @@ const chatHistory = chat.messages.slice(0,-1);
 
     console.log("Stream completed, full answer length:", fullAnswer.length);
 
-    // --- STEP 5: Save Full Response to DB ---
+    // --- STEP 5: Send Final Message (DO THIS FIRST) ---
+    // Tell the frontend immediately that the stream is done
+    res.write(`data: ${JSON.stringify({ done: true, chatId: chat._id })}\n\n`);
+    res.end();
+
+    // --- STEP 6: Save Full Response to DB (DO THIS LAST) ---
     chat.messages.push({
       role: "assistant",
       content: fullAnswer
     });
-    await chat.save();
-
-    // --- STEP 6: Send Final Message ---
-    res.write(`data: ${JSON.stringify({ done: true, chatId: chat._id })}\n\n`);
-    res.end();
+    
+    // Notice we REMOVED the "await" keyword. 
+    // This is a "Fire-and-Forget" operation. The server saves it in the background.
+    chat.save().catch(dbErr => console.error("Failed to save AI response to DB:", dbErr));
 
   } catch (err) { 
     console.error("Chat error:", err);
