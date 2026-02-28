@@ -15,7 +15,8 @@ import dotenv from "dotenv";
 dotenv.config();
 
 // Constants
-const EMBEDDING_MODEL = "text-embedding-004";
+const EMBEDDING_MODEL = "gemini-embedding-001";
+const TARGET_DIMENSION = 1024; // Changed from 3072 to 1024
 const CHUNK_SIZE = 1000;
 const CHUNK_OVERLAP = 200;
 const RATE_LIMIT_DELAY = 100;
@@ -29,7 +30,7 @@ const splitter = new RecursiveCharacterTextSplitter({
   chunkSize: CHUNK_SIZE,
   chunkOverlap: CHUNK_OVERLAP,
 });
-
+console.log(generateEmbedding.ListModels)
 /**
  * Extract embedding from Gemini API response
  */
@@ -53,6 +54,7 @@ export async function generateEmbedding(text) {
   const response = await ai.models.embedContent({
     model: EMBEDDING_MODEL,
     contents: text,
+    outputDimensionality: TARGET_DIMENSION, // Now 1024
   });
 
   const embedding = extractEmbedding(response);
