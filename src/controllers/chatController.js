@@ -22,6 +22,11 @@ export const handleChat = async (req, res, next) => {
       if (!chat) {
         return res.status(404).json({error:"Chat thread not found"});
       }
+
+      if (chat.title === "New Chat" || chat.messages.length === 0) {
+        chat.title = chatTitle;
+      }
+      
     } else {
       chat = await Chat.create({
         userId: userId,
